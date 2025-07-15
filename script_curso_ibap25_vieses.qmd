@@ -1,0 +1,618 @@
+---
+title: "script_curso_ibap25_vieses"
+format: html
+editor: visual
+---
+### Pacotes
+
+```{r}
+library(lavaan)
+library(dplyr)
+library(psych)
+library(EGAnet)
+library(httr)
+library(jsonlite)
+library(dplyr)
+library(purrr)
+```
+
+### Aquiescencia
+
+#### Simular os dados
+
+```{r}
+
+md.sim.1 <- "f1 =~  0.5*it1 + 0.5*it2 + 0.5*it3 + 0.5*it4 + 0.5*it5 +
+       -0.5*it6 + -0.5*it7 + -0.5*it8 + -0.5*it9 + -0.5*it10 
+ f2 =~  0.5*it11 + 0.5*it12 + 0.5*it13 + 0.5*it14 + 0.5*it15 + 
+        -0.5*it16 + -0.5*it17 + -0.5*it18 + -0.5*it19 + -0.5*it20 
+  f3 =~  0.5*it21 + 0.5*it22 + 0.5*it23 + 0.5*it24 + 0.5*it25 + 
+        -0.5*it26 + -0.5*it27 + -0.5*it28 + -0.5*it29 + -0.5*it30 
+  fa =~  1*it1 + 1*it2 + 1*it3 + 1*it4 + 1*it5 + 1*it6 + 1*it7 + 
+          1*it8 + 1*it9 + 1*it10 + 1*it11 + 1*it12 + 1*it13 + 1*it14 + 
+          1*it15 + 1*it16 + 1*it17 + 1*it18 + 
+         1*it19 + 1*it20 + 1*it21 + 1*it22 + 1*it23 + 1*it24 +
+         1*it25 + 1*it26 +  1*it27 + 1*it28 + 1*it29 + 1*it30
+ f1 ~~ .4*f2
+ f1 ~~ .4*f3
+ f2 ~~ .4*f3
+ fa ~~ 0*f1
+ fa ~~ 0*f2
+ fa ~~ 0*f3
+ #variancia
+ f1 ~~ 1*f1
+ f2 ~~ 1*f2
+ f3 ~~ 1*f3
+ fa ~~ .1*fa
+ "
+
+md.sim.3 <- "f1 =~  0.5*it1 + 0.5*it2 + 0.5*it3 + 0.5*it4 + 0.5*it5 +
+       -0.5*it6 + -0.5*it7 + -0.5*it8 + -0.5*it9 + -0.5*it10 
+ f2 =~  0.5*it11 + 0.5*it12 + 0.5*it13 + 0.5*it14 + 0.5*it15 + 
+        -0.5*it16 + -0.5*it17 + -0.5*it18 + -0.5*it19 + -0.5*it20 
+  f3 =~  0.5*it21 + 0.5*it22 + 0.5*it23 + 0.5*it24 + 0.5*it25 + 
+        -0.5*it26 + -0.5*it27 + -0.5*it28 + -0.5*it29 + -0.5*it30 
+  fa =~  1*it1 + 1*it2 + 1*it3 + 1*it4 + 1*it5 + 1*it6 + 1*it7 + 
+          1*it8 + 1*it9 + 1*it10 + 1*it11 + 1*it12 + 1*it13 + 
+          1*it14 + 1*it15 + 1*it16 + 1*it17 + 1*it18 + 
+         1*it19 + 1*it20 + 1*it21 + 1*it22 + 1*it23 + 1*it24 + 
+         1*it25 + 1*it26 + 1*it27 + 1*it28 + 1*it29 + 1*it30
+ f1 ~~ .4*f2
+ f1 ~~ .4*f3
+ f2 ~~ .4*f3
+ fa ~~ 0*f1
+ fa ~~ 0*f2
+ fa ~~ 0*f3
+ #variancia
+ f1 ~~ 1*f1
+ f2 ~~ 1*f2
+ f3 ~~ 1*f3
+ fa ~~ .3*fa
+ "
+
+md.sim.5 <- "f1 =~  0.5*it1 + 0.5*it2 + 0.5*it3 + 0.5*it4 + 0.5*it5 +
+       -0.5*it6 + -0.5*it7 + -0.5*it8 + -0.5*it9 + -0.5*it10 
+ f2 =~  0.5*it11 + 0.5*it12 + 0.5*it13 + 0.5*it14 + 0.5*it15 + 
+        -0.5*it16 + -0.5*it17 + -0.5*it18 + -0.5*it19 + -0.5*it20 
+  f3 =~  0.5*it21 + 0.5*it22 + 0.5*it23 + 0.5*it24 + 0.5*it25 + 
+        -0.5*it26 + -0.5*it27 + -0.5*it28 + -0.5*it29 + -0.5*it30 
+  fa =~  1*it1 + 1*it2 + 1*it3 + 1*it4 + 1*it5 + 1*it6 + 1*it7 + 
+        1*it8 + 1*it9 + 1*it10 + 1*it11 + 1*it12 + 1*it13 + 1*it14 +
+          1*it15 + 1*it16 + 1*it17 + 1*it18 +  1*it19 + 1*it20 + 
+          1*it21 + 1*it22 + 1*it23 + 1*it24 + 1*it25 + 1*it26 + 
+         1*it27 + 1*it28 + 1*it29 + 1*it30
+ f1 ~~ .4*f2
+ f1 ~~ .4*f3
+ f2 ~~ .4*f3
+ fa ~~ 0*f1
+ fa ~~ 0*f2
+ fa ~~ 0*f3
+ #variancia
+ f1 ~~ 1*f1
+ f2 ~~ 1*f2
+ f3 ~~ 1*f3
+ fa ~~ .5*fa
+ "
+
+
+dt.aq.1<- simulateData(model=md.sim.1, sample.nobs = 1000) %>% round(.,2)
+dt.aq.3<- simulateData(model=md.sim.3, sample.nobs = 1000) %>% round(.,2)
+dt.aq.5<- simulateData(model=md.sim.5, sample.nobs = 1000) %>% round(.,2)
+rm(md.sim.1, md.sim.3, md.sim.5)
+
+```
+
+#### modelar Sem controle
+
+```{r}
+md.cfa.SC <- 
+"f1 =~  it1 + it2 + it3 + it4 + it5 +
+                  it6 + it7 + it8 + it9 + it10 
+ f2 =~  it11 + it12 + it13 + it14 + it15 + 
+        it16 + it17 + it18 + it19 + it20 
+  f3 =~  it21 + it22 + it23 + it24 + it25 + 
+        it26 + it27 + it28 + it29 + it30"
+
+# quando aquiescencia .1  
+fit.md.cfa.SC.1<-cfa(model=md.cfa.SC, data=dt.aq.1)
+summary(fit.md.cfa.SC.1, standardized=T, fit=T)
+
+# quando aquiescencia .3  
+fit.md.cfa.SC.3<-cfa(model=md.cfa.SC, data=dt.aq.3)
+summary(fit.md.cfa.SC.3, standardized=T, fit=T)
+
+# quando aquiescencia .5  
+fit.md.cfa.SC.5<-cfa(model=md.cfa.SC, data=dt.aq.5)
+summary(fit.md.cfa.SC.5, standardized=T, fit=T)
+
+
+# EFA
+# AP
+fit.md.pa.SC.1<- fa.parallel(dt.aq.1, plot=T)
+fit.md.pa.SC.3<- fa.parallel(dt.aq.3, plot=T)
+fit.md.pa.SC.5<- fa.parallel(dt.aq.5, plot=T)
+
+#EGA
+fit.EGA.SC.1<- EGA(dt.aq.1)
+fit.EGA.SC.3<- EGA(dt.aq.3)
+fit.EGA.SC.5<- EGA(dt.aq.5)
+
+```
+
+
+#### modelar IR
+```{r}
+md.cfa.IR <- 
+"f1 =~  NA*it1 + it2 + it3 + it4 + it5 +
+                  it6 + it7 + it8 + it9 + it10 
+ f2 =~  NA*it11 + it12 + it13 + it14 + it15 + 
+        it16 + it17 + it18 + it19 + it20 
+  f3 =~  NA*it21 + it22 + it23 + it24 + it25 + 
+        it26 + it27 + it28 + it29 + it30
+ facq =~ 1*it1 + 1*it2 + 1*it3 + 1*it4 + 1*it5 +
+         1*it6 + 1*it7 + 1*it8 + 1*it9 + 1*it10 +
+         1*it11 + 1*it12 + 1*it13 + 1*it14 + 1*it15 + 
+         1*it16 + 1*it17 + 1*it18 + 1*it19 + 1*it20 +
+         1*it21 +  1*it22 + 1*it23 + 1*it24 + 1*it25 + 
+         1*it26 + 1*it27 + 1*it28 + 1*it29 + 1*it30
+ f1 ~~ 1*f1
+ f2 ~~ 1*f2
+ f3 ~~ 1*f3
+ facq ~~ 0*f1 
+ facq ~~ 0*f2
+ facq ~~ 0*f3
+ facq ~~ NA*facq "
+
+# quando aquiescencia .1  
+md.cfa.IR.1<-cfa(model=md.cfa.IR, data=dt.aq.1)
+summary(md.cfa.IR.1, standardized=T, fit=T)
+
+# quando aquiescencia .3  
+md.cfa.IR.3<-cfa(model=md.cfa.IR, data=dt.aq.3)
+summary(md.cfa.IR.3, standardized=T, fit=T)
+
+# quando aquiescencia .5  
+md.cfa.IR.5<-cfa(model=md.cfa.IR, data=dt.aq.5)
+summary(md.cfa.IR.5, standardized=T, fit=T)
+```
+
+
+#### modelar ipsatizado (pseudo)
+```{r}
+#vetor com os itens
+vt_itens <- names(dt.aq.1)
+
+# calcular indicador de aquiescencia
+vetor_acq.1 <-  rowMeans(dt.aq.1[, vt_itens], na.rm = TRUE) %>% round(4)
+vetor_acq.3 <-  rowMeans(dt.aq.3[, vt_itens], na.rm = TRUE) %>% round(4)
+vetor_acq.5 <-  rowMeans(dt.aq.5[, vt_itens], na.rm = TRUE) %>% round(4)
+
+# subtrair o indicador de aquiescencia de cada escore individual
+dt.aq.ips.1 <- dt.aq.1
+dt.aq.ips.3 <- dt.aq.3
+dt.aq.ips.5 <- dt.aq.5
+
+dt.aq.ips.1[vt_itens] <- lapply(
+  dt.aq.ips.1[vt_itens],
+  function(col) col - vetor_acq.1
+)
+
+dt.aq.ips.3[vt_itens] <- lapply(
+  dt.aq.ips.3[vt_itens],
+  function(col) col - vetor_acq.3
+)
+
+dt.aq.ips.5[vt_itens] <- lapply(
+  dt.aq.ips.5[vt_itens],
+  function(col) col - vetor_acq.5
+)
+
+# rodar EGA
+fit.EGA.ips.1<- EGA(dt.aq.ips.1)
+fit.EGA.ips.3<- EGA(dt.aq.ips.3)
+fit.EGA.ips.5<- EGA(dt.aq.ips.5)
+
+
+# rodar CFA
+md.cfa.SC <- 
+"f1 =~  NA*it1 + it2 + it3 + it4 + it5 +
+                  it6 + it7 + it8 + it9 + it10 
+ f2 =~  NA*it11 + it12 + it13 + it14 + it15 + 
+        it16 + it17 + it18 + it19 + it20 
+  f3 =~  NA*it21 + it22 + it23 + it24 + it25 + 
+        it26 + it27 + it28 + it29 + it30
+  f1 ~~ 1*f1
+  f2 ~~ 1*f2
+  f3 ~~ 1*f3
+"
+# quando aquiescencia .1  
+fit.md.cfa.ips.1<-cfa(model=md.cfa.SC, data=dt.aq.ips.1)
+summary(fit.md.cfa.ips.1, standardized=T, fit=T)
+# quando aquiescencia .3  
+fit.md.cfa.ips.3<-cfa(model=md.cfa.SC, data=dt.aq.ips.3)
+summary(fit.md.cfa.ips.3, standardized=T, fit=T)
+# quando aquiescencia .5  
+fit.md.cfa.ips.5<-cfa(model=md.cfa.SC, data=dt.aq.ips.5)
+summary(fit.md.cfa.ips.5, standardized=T, fit=T)
+
+
+# EFA
+# AP
+fit.md.pa.ips.1<- fa.parallel(dt.aq.ips.1, plot=T)
+fit.md.pa.ips.3<- fa.parallel(dt.aq.ips.3, plot=T)
+fit.md.pa.ips.5<- fa.parallel(dt.aq.ips.5, plot=T)
+
+```
+
+
+
+#### modelar com MIMIC
+```{r}
+# criar uma variavel de aquiescencia em cada banco
+#vetor com os itens
+vt_itens <- names(dt.aq.1)
+
+# calcular indicador de aquiescencia
+vetor_acq.1 <-  rowMeans(dt.aq.1[, vt_itens], na.rm = TRUE) %>% round(4)
+vetor_acq.3 <-  rowMeans(dt.aq.3[, vt_itens], na.rm = TRUE) %>% round(4)
+vetor_acq.5 <-  rowMeans(dt.aq.5[, vt_itens], na.rm = TRUE) %>% round(4)
+
+# subtrair o indicador de aquiescencia de cada escore individual
+dt.aq.mimic.1 <- dt.aq.1
+dt.aq.mimic.3 <- dt.aq.3
+dt.aq.mimic.5 <- dt.aq.5
+
+# colocar o indicador de aquiescencia no banco
+dt.aq.mimic.1$acq <- vetor_acq.1
+dt.aq.mimic.3$acq <- vetor_acq.3
+dt.aq.mimic.5$acq <- vetor_acq.5
+
+
+md.cfa.mimic <- 
+"f1 =~  NA*it1 + it2 + it3 + it4 + it5 +
+                  it6 + it7 + it8 + it9 + it10 
+ f2 =~  NA*it11 + it12 + it13 + it14 + it15 + 
+        it16 + it17 + it18 + it19 + it20 
+  f3 =~  NA*it21 + it22 + it23 + it24 + it25 + 
+        it26 + it27 + it28 + it29 + it30
+  it1 ~ acq
+  it2 ~ acq
+  it3 ~ acq
+  it4 ~ acq
+  it5 ~ acq
+  it6 ~ acq
+  it7 ~ acq
+  it8 ~ acq
+  it9 ~ acq
+  it10 ~ acq
+  it11 ~ acq
+  it12 ~ acq
+  it13 ~ acq
+  it14 ~ acq
+  it15 ~ acq
+  it16 ~ acq
+  it17 ~ acq
+  it18 ~ acq
+  it19 ~ acq
+  it20 ~ acq
+  it21 ~ acq
+  it22 ~ acq
+  it23 ~ acq
+  it24 ~ acq
+  it25 ~ acq
+  it26 ~ acq
+  it27 ~ acq
+  it28 ~ acq
+  it29 ~ acq
+  it30 ~ acq
+ f1 ~~ 1*f1
+ f2 ~~ 1*f2
+ f3 ~~ 1*f3
+ acq ~~ 0*f1 
+ acq ~~ 0*f2
+ acq ~~ 0*f3
+ "
+
+# quando aquiescencia .1  
+fit.md.cfa.MIMIC.1<-cfa(model=md.cfa.mimic, data=dt.aq.mimic.1)
+summary(fit.md.cfa.MIMIC.1, standardized=T, fit=T)
+
+# quando aquiescencia .3  
+fit.md.cfa.MIMIC.3<-cfa(model=md.cfa.mimic, data=dt.aq.mimic.3)
+summary(fit.md.cfa.MIMIC.3, standardized=T, fit=T)
+
+# quando aquiescencia .5  
+fit.md.cfa.MIMIC.5<-cfa(model=md.cfa.mimic, data=dt.aq.mimic.5)
+summary(fit.md.cfa.MIMIC.5, standardized=T, fit=T)
+```
+
+
+##Desejabilidade Social
+#### Quadruplas
+##### Simular os dados
+```{R}
+#limpara o enviroment para facilitar a visualização (opcional)
+rm(list = ls())
+
+#simular os dados
+modelQuad <- "f1 =~  1*it_1_1 + 1*it_1_2   + -1*it_1_3   +   -1*it_1_4 
+              f2 =~ .9*it_2_1 + .50*it_2_2 + -.45*it_2_3 + -.85*it_2_4 
+              f3 =~ .8*it_3_1 + .6*it_3_2  + -.05*it_3_3 +  -.9*it_3_4 
+              
+              DS =~ 1*it_1_1  +  -1*it_1_2 +   1*it_1_3 +   -1*it_1_4 +
+                   .8*it_2_1  + -.7*it_2_2 +  .5*it_2_3 +  -.8*it_2_4 +
+                   .9*it_3_1 +  -.03*it_3_2 + .6*it_3_3 + -.75*it_3_4 
+              DS ~~ .3*DS
+              f1 ~~ .8*f1
+              f2 ~~ .8*f2
+              f3 ~~ .8*f3
+              DS ~~ 0*f1
+              DS ~~ 0*f2
+              DS ~~ 0*f3
+              f1 ~~ .3*f2
+              f1 ~~ .2*f3
+              f2 ~~ .35*f3
+"
+
+### dicionario  para facilitar a visualizacao
+item<-c("it_1_1", "it_1_2", "it_1_3", "it_1_4", 
+        "it_2_1", "it_2_2", "it_2_3", "it_2_4", 
+        "it_3_1", "it_3_2", "it_3_3", "it_3_4")
+conteudo<- c(1,1,-1,-1,   1,1,-1,-1,  1,1,-1,-1)
+DS  <- c(1,-1,1,-1,   1,-1,1,-1,  1,-1,1,-1)
+dic<-cbind.data.frame(item,conteudo, DS)
+
+#simular os dados
+set.seed(123)
+dt.sd <- simulateData(modelQuad, sample.nobs = 1000, 
+                      ordered = item) %>% round(.,3)
+
+
+# converter para likert (random thresholds)
+likert_levels <- c("1", "2", "3", "4", "5")
+dt.sd.1 <- as.data.frame(lapply(dt.sd, function(x) as.numeric(cut(x, breaks=5, labels=likert_levels))))
+
+```
+
+
+##### Modelar sem controle
+```{R}
+# EFA sem controle 3 fat
+fit.DS.sc.3f<-fa(dt.sd.1, nfactors=3,cor="poly",rotate = "oblimin")
+print(fit.DS.sc.3f)
+cargas.DS.sc.3f <- as.matrix( unclass(fit.DS.sc.3f$loadings) ) %>%  as.data.frame(.) %>% round(.,2)
+
+# EFA sem controle 4fat (um fator extra para DS)
+fit.DS.sc.4f<-fa(dt.sd.1, nfactors=4,cor="poly",rotate = "oblimin")
+print(fit.DS.sc.4f)
+cargas.DS.sc.4f <- as.matrix( unclass(fit.DS.sc.4f$loadings) ) %>%  as.data.frame(.) %>% round(.,2)
+
+
+# rodar EGA
+fit.DS.EGA.sc<- EGA(dt.sd.1)
+```
+
+
+##### Modelar CFA ESEM
+```{R}
+#CFA - bifactor
+md.CFA_1DS_3f <- '
+  SD =~  it_1_1+ it_1_2+ it_1_3+ it_1_4 +
+         it_2_1+ it_2_2+ it_2_3+ it_2_4 +
+         it_3_1+ it_3_2+ it_3_3+ it_3_4
+   f1 =~ it_1_1+ it_1_2+ it_1_3+ it_1_4
+   f2 =~ it_2_1+ it_2_2+ it_2_3+ it_2_4
+   f3 =~ it_3_1+ it_3_2+ it_3_3+ it_3_4
+    SD ~~ 0*f1      
+   SD ~~ 0*f2 
+   SD ~~ 0*f3
+'
+fit.md.CFA_1DS_3f <- sem(model = md.CFA_1DS_3f, data = dt.sd.1)
+summary(fit.md.CFA_1DS_3f, standardized=T, fit=T)
+
+# cuidado com o overcontrol !!!!
+
+#ESEM 
+md.ESEM_1DS_3f <- '
+ SD =~  it_1_1+ it_1_2+ it_1_3+ it_1_4+ 
+        it_2_1+ it_2_2+ it_2_3+ it_2_4+ 
+        it_3_1+ it_3_2+ it_3_3+ it_3_4
+    efa("efa1")*f1 + 
+    efa("efa1")*f2 +
+    efa("efa1")*f3  =~ it_1_1+ it_1_2+ it_1_3+ it_1_4+
+        it_2_1+ it_2_2+ it_2_3+ it_2_4+ 
+        it_3_1+ it_3_2+ it_3_3+ it_3_4
+   SD ~~ 0*f1      
+   SD ~~ 0*f2 
+   SD ~~ 0*f3
+'
+
+fit.md.ESEM_1DS_3f <- sem(model = md.ESEM_1DS_3f, data = dt.sd.1, rotation = "geomin")
+summary(fit.md.ESEM_1DS_3f, standardized=T, fit=T)
+
+
+
+
+```
+
+
+#### LLMs (GPT)
+#####Função e Key
+```{R}
+
+# ATENÇÃO: Se usar esse script, por favor, cite nossa pesquisa!!!
+
+# https://platform.openai.com/
+#inserir a chave da API aqui
+api_key <- "xxx"
+url <- "https://api.openai.com/v1/chat/completions"
+
+
+prompt_inicial <- "Você, ChatGPT, atuará como um avaliador de desejabilidade social de itens. Estou trabalhando em um instrumento de psicologia que contém 50 itens. Cada item descreve um comportamento ou traço. Sua tarefa é avaliar quão *socialmente desejável* cada item é, de acordo com a seguinte definição: *“A desejabilidade social é a tendência das pessoas de responder aos itens de forma a transmitir uma impressão favorável (isto é, socialmente desejável).”* *Passo 2 – Itens do Instrumento* - Há 50 itens no total; cada item descreve um traço/afirmação (por exemplo: “Costumo ser retraído.”, “Sou extrovertido.”, etc.). - Para cada item, você deve emitir um *julgamento de valor* sobre seu nível de aceitação/desejabilidade na sociedade em geral. *Passo 3 – Escala de Avaliação* - Sua avaliação será numérica, variando entre *-1* e *+1*. - *-1* = característica majoritariamente *indesejável* socialmente; - *0* = característica considerada *neutra* ou sem conotação forte positiva/negativa; - *+1* = característica majoritariamente *desejável* socialmente. - *Valores intermediários* são permitidos para indicar nuances (por exemplo, -0.5, +0.3, +0.8, etc.). *Passo 4 – Formato de Resposta* - Número do item e a pontuação (entre -1 e +1). (Observação: Não apresente o texto do item). *Passo 5 – Solicitação Final* Agora, segue a lista de itens para avaliação (com seus 50 itens). Para cada um, forneça a pontuação de acordo com a *escala* e a *definição de desejabilidade social* apresentadas: 1. Costumo ser retraído 2. Sou tagarela, falo demais 3. Sou extrovertido, sociável 4. Costumo ouvir mais do que falar 5. Importo-me com os outros e tento ajudá-los quando precisam de mim 6. Quando necessário, posso me distanciar dos sentimentos dos outros 7. Sou indiferente, frio e distante dos outros 8. Priorizo tanto os sentimentos dos outros que acabo esquecendo os meus 9. Sou desorganizado 10. Sou tolerante com a desorganização 11. Mantenho as coisas limpas e arrumadas 12. Sou obsessivo, intolerante com a desorganização 13. Eu me preocupo demais com tudo 14. Consigo refletir bastante sobre os meus problemas 15. Consigo ficar calmo mesmo quando uma situação difícil se aproxima 16. Sou tão tranquilo que ignoro os riscos dos meus problemas 17. Assumo com facilidade a posição de liderança, de poder 18. Prefiro que outras pessoas colaborem em minhas decisões 19. Teria dificuldade em assumir uma posição de chefia/autoridade 20. Dizem que sou uma pessoa mandona 21. Às vezes, sou mal-educado com os outros 22. Sou tão educado que as pessoas se aproveitam de mim 23. Trato as pessoas com respeito 24. Consigo deixar os bons modos de lado se preciso me defender 25. Sou preguiçoso, tenho dificuldade para terminar minhas tarefas 26. Sou obcecado, fico preso às minhas tarefas 27. Sou persistente, dedico-me às tarefas até que estejam terminadas 28. Consigo esquecer as minhas tarefas para priorizar minha diversão 29. Tenho pouco interesse por ideias abstratas 30. Priorizo buscar soluções rápidas e objetivas 31. Gosto de pensar profundamente sobre as coisas 32. Sou tão curioso com os porquês das coisas que esqueço a parte prática 33. Sou emocionalmente estável, dificilmente fico irritado 34. Sou frio, dificilmente fico irritado mesmo quando deveria ficar 35. Sou nervoso, fico irritado com facilidade 36. Consigo expressar a minha irritação 37. Sou original, tenho ideias novas 38. Sou tão criativo que vivo no mundo da lua 39. Tenho pouca criatividade 40. Sou uma pessoa mais prática do que imaginativa 41. Admiro a arte, música ou literatura 42. Com frequência sinto-me deprimido, triste 43. Sou cheio de energia 44. Acredito na bondade das pessoas 45. Sou uma pessoa comprometida, os outros podem contar comigo 46. Tenho poucos interesses artísticos 47. Sinto-me confiante, satisfeito com quem eu sou 48. Sou menos ativo do que outras pessoas 49. Costumo achar defeitos nos outros 50. Sou meio desleixado, não tenho cuidado na hora de fazer as coisas"
+
+
+avaliar_itens_em_df <- function(prompt, model = "o4-mini", temperature = 0) {
+  body <- list(
+    model    = model,
+    messages = list(
+      list(role    = "system",
+           content = "Você é um avaliador de desejabilidade social de itens."),
+      list(role    = "user",
+           content = prompt)
+    ),
+    temperature       = temperature,
+    presence_penalty  = 0,
+    frequency_penalty = 0
+  )
+  
+  response <- POST(
+    url,
+    add_headers(
+      Authorization  = paste("Bearer", api_key),
+      `Content-Type` = "application/json"
+    ),
+    body = toJSON(body, auto_unbox = TRUE)
+  )
+  
+  if (status_code(response) != 200) {
+    stop(
+      "Chamada à API falhou. Status: ", status_code(response), "\n",
+      "Resposta: ", content(response, as = "text", encoding = "UTF-8")
+    )
+  }
+  
+  result_json   <- content(response, as = "text", encoding = "UTF-8")
+  result_list   <- parse_json(result_json)
+  generated_txt <- result_list$choices[[1]]$message$content
+  
+  # parsing para data.frame
+  lines <- strsplit(generated_txt, "\n")[[1]]
+  extrair_item_score <- function(linha) {
+    linha <- trimws(linha)
+    padrao <- "^\\s*(\\d+)\\.\\s*([-+]?\\d+(?:\\.\\d+)?)"
+    m <- regexec(padrao, linha)
+    caps <- regmatches(linha, m)[[1]]
+    if (length(caps) == 3) {
+      data.frame(item  = as.integer(caps[2]),
+                 score = as.numeric(caps[3]),
+                 stringsAsFactors = FALSE)
+    } else {
+      NULL
+    }
+  }
+  df_result <- do.call(rbind, lapply(lines, extrair_item_score))
+  return(df_result)
+}
+
+
+
+
+
+```
+
+
+##### Extrair ratings GPT
+```{R}
+ #informar quantas replicações (numero de avaliações) no n_reps
+n_reps <- 5
+lista_respostas_df <- vector("list", n_reps)
+
+#tentar gpt-4o
+for (i in seq_len(n_reps)) {
+  cat("Chamada nº", i, "...\n")
+  lista_respostas_df[[i]] <- avaliar_itens_em_df(
+    prompt    = prompt_inicial,
+    model     = "gpt-4o-mini",
+    temperature = 0.3
+  )
+  Sys.sleep(1)
+}
+
+  #  complilar
+  # Removemos linhas com NA na coluna 'escore'
+  lista_dfs <- map(lista_respostas_df, ~ filter(.x, !is.na(score)))
+  # Fazemos a junção dos data frames usando 'item' como chave
+  df_final <- reduce(lista_dfs, full_join, by = "item")
+  # 3) Renomear as colunas para identificar cada replicação:
+  colnames(df_final) <- c("item", paste0("rep_", seq_along(lista_respostas_df)))
+
+  # salvar em excel (opcional)
+  write.csv2(df_final, paste0("DS_API_GPT.csv"))
+        
+  rm(lista_respostas_df, lista_dfs, n_reps, df_final, i)
+
+
+``` 
+
+
+##### Analisar ratings GPT
+```{R}
+recup_analyses <- function(banco) { 
+  cols_rep <- grep("^rep", names(banco), value = TRUE)
+  data_analyses <- banco[, cols_rep, drop = FALSE]
+
+  mean <- apply(data_analyses, 1, function(x) round(mean(x, na.rm = T), 2)) 
+  sd <- apply(data_analyses, 1, function(x) round(sd(x, na.rm = T),2)) 
+  min <- apply(data_analyses, 1, function(x) min(x, na.rm = T))       
+  max <- apply(data_analyses, 1, function(x) max(x, na.rm = T))      
+  
+  dif_max_min <- max - min  
+  
+  stats <- data.frame(mean = mean,
+                      sd = sd,
+                      min = min,
+                      max = max,
+                      dif_max_min = dif_max_min)
+  
+  ICC <- psych::ICC(data_analyses) 
+  
+  cor <- cor(data_analyses) 
+  
+  mean_cor <- mean(cor, na.rm = T) 
+  
+  return(list(stats = stats, global_stats = list(ICC, cor, mean_cor)))
+  
+}
+
+#buscar a planilha com as avalições
+#gptXXX <- read_excel("template_IA_DS.xlsx", sheet = "GPT_4o")
+gpt <- recup_analyses(df_final )
+gpt.stats.item<-gpt[["stats"]]
+
+#icc2
+gpt[["global_stats"]][[1]][["results"]][["ICC"]][[2]]
+
+#cor entre replicações
+gpt[["global_stats"]][[2]]
+
+#cor média
+gpt[["global_stats"]][[3]]
+
+```
+
+
+##### Aplicar ratings na CFA
+```{R}
+# CFA + LLM
+# usar os ratings da LLM como valores fixos da DS
+# cuide para realizar um bom diagnóstico dos ratings antes de realizar o seguinte procedimento
+
+md.LLM_1DS_3f <- '
+  DS =~ 1*it_1_1  +  -1*it_1_2 +   1*it_1_3 +   -1*it_1_4 +
+        .8*it_2_1  + -.7*it_2_2 +  .5*it_2_3 +  -.8*it_2_4 +
+        .9*it_3_1 +  -.03*it_3_2 + .6*it_3_3 + -.75*it_3_4 
+   f1 =~ NA*it_1_1+ it_1_2+ it_1_3+ it_1_4
+   f2 =~ NA*it_2_1+ it_2_2+ it_2_3+ it_2_4
+   f3 =~ NA*it_3_1+ it_3_2+ it_3_3+ it_3_4
+   DS ~~ 0*f1      
+   DS ~~ 0*f2 
+   DS ~~ 0*f3
+   DS ~~ NA*DS
+   f1 ~~ 1*f1
+   f2 ~~ 1*f2
+   f3 ~~ 1*f3
+   
+'
+fit.md.LLM_1DS_3f <- sem(model = md.LLM_1DS_3f, data = dt.sd.1)
+summary(fit.md.LLM_1DS_3f, standardized=T, fit=T)
+```
